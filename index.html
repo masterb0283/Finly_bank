@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Finly · mobile banking</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B1220;
+    --ink-soft:#182642;
+    --paper:#FAF7F1;
+    --paper-dim:#F1EAD9;
+    --indigo:#2D3E63;
+    --gold:#D9A340;
+    --gold-soft:#F4E3BC;
+    --mint:#2F8F63;
+    --mint-soft:#DCEFE3;
+    --coral:#C8543C;
+    --coral-soft:#F6DCD3;
+    --line:#E8E1D0;
+    --muted:#8A8370;
+    --white:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Sora',sans-serif;
+    background:
+      radial-gradient(circle at 15% 8%, #eee3c8 0%, transparent 45%),
+      linear-gradient(160deg,#e9e2cf 0%, #d9d0b8 100%);
+    display:flex;justify-content:center;align-items:center;min-height:100vh;padding:24px;
+  }
+  .num{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Fraunces',serif;}
+
+  .phone{
+    max-width:390px;width:100%;
+    background:var(--paper);
+    border-radius:38px;
+    box-shadow:0 30px 70px rgba(11,18,32,0.28), 0 2px 0 rgba(255,255,255,0.6) inset;
+    overflow:hidden;padding:0 0 10px;position:relative;
+    border:1px solid rgba(255,255,255,0.5);
+  }
+
+  /* header */
+  .screen-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:22px 20px 14px;
+  }
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(135deg,var(--ink) 0%, var(--indigo) 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold-soft);font-family:'Fraunces',serif;font-weight:600;font-size:12px;letter-spacing:0.2px;
+  }
+  .screen-header h2{
+    font-family:'Fraunces',serif;font-size:21px;font-weight:600;letter-spacing:-0.2px;color:var(--ink);
+  }
+  .header-actions{display:flex;gap:10px;}
+  .header-actions .icon-btn{
+    width:36px;height:36px;border-radius:11px;background:var(--white);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+    font-size:15px;box-shadow:0 1px 0 var(--line);
+  }
+
+  .screen-container{position:relative;min-height:560px;padding:0 20px;}
+  .screen{display:none;animation:fadeSlide .28s cubic-bezier(.2,.7,.3,1);}
+  .screen.active{display:block;}
+  @keyframes fadeSlide{0%{opacity:0;transform:translateY(8px);}100%{opacity:1;transform:translateY(0);}}
+
+  /* ---- HOME ---- */
+  .balance-card{
+    position:relative;overflow:hidden;
+    background:linear-gradient(150deg,var(--ink) 0%, var(--ink-soft) 55%, #223258 100%);
+    padding:24px 22px 22px;border-radius:26px;color:var(--white);margin-bottom:18px;
+    box-shadow:0 16px 32px rgba(11,18,32,0.35);
+  }
+  .balance-card::before{
+    content:"";position:absolute;inset:0;opacity:0.14;pointer-events:none;
+    background-image:
+      repeating-radial-gradient(circle at 0 100%, transparent 0, transparent 18px, rgba(217,163,64,0.5) 19px, transparent 20px);
+    background-size:64px 64px;
+  }
+  .balance-row{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;}
+  .balance-label{font-size:12.5px;opacity:0.65;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;}
+  .balance-amount{
+    font-family:'Fraunces',serif;font-size:27px;font-weight:500;letter-spacing:-0.4px;
+    display:flex;align-items:center;gap:10px;margin-top:6px;position:relative;z-index:1;
+  }
+  .mask-toggle{
+    font-size:14px;opacity:0.75;cursor:pointer;background:rgba(255,255,255,0.12);
+    padding:8px 10px;border-radius:40px;position:relative;z-index:1;
+  }
+  .balance-edit-row{display:flex;align-items:center;gap:8px;}
+  .balance-edit-input{
+    background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.35);border-radius:12px;
+    padding:6px 10px;font-size:21px;font-weight:500;color:var(--white);width:180px;outline:none;
+    font-family:'Fraunces',serif;
+  }
+  .balance-edit-input:focus{border-color:var(--gold);}
+  .balance-edit-confirm{
+    width:34px;height:34px;border-radius:10px;background:var(--gold);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0;
+  }
+  .balance-split{display:flex;gap:22px;margin-top:16px;position:relative;z-index:1;}
+  .balance-split div{font-size:12px;opacity:0.6;font-weight:500;}
+  .balance-split strong{display:block;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;opacity:1;margin-top:2px;color:var(--gold-soft);}
+
+  .quick-actions{display:flex;justify-content:space-between;margin:20px 0 20px;}
+  .quick-action{display:flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink-soft);font-size:11.5px;font-weight:600;cursor:pointer;}
+  .quick-action i{
+    background:var(--white);padding:13px;border-radius:16px;font-size:16px;width:44px;height:44px;
+    display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 1px 0 var(--line);
+    transition:.15s;
+  }
+  .quick-action:active i{transform:scale(0.92);background:var(--gold-soft);}
+
+  .section-label{font-size:11px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--muted);margin:4px 0 10px;}
+
+  .insight-box{
+    background:var(--white);padding:13px 14px;border-radius:16px;display:flex;align-items:center;gap:11px;
+    margin:0 0 9px;color:var(--ink-soft);font-weight:500;font-size:13.5px;box-shadow:0 1px 0 var(--line);
+  }
+  .insight-box i{color:var(--mint);background:var(--mint-soft);padding:8px;border-radius:11px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .insight-box.gold i{color:#9c6c1c;background:var(--gold-soft);}
+  .insight-box.coral i{color:var(--coral);background:var(--coral-soft);}
+
+  /* ---- TRANSACTIONS ---- */
+  .search-filter{display:flex;gap:9px;margin:16px 0 14px;}
+  .search-filter input{
+    flex:1;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--white);
+    font-size:13.5px;outline:none;font-family:'Sora',sans-serif;color:var(--ink);
+  }
+  .search-filter input:focus{border-color:var(--indigo);}
+  .search-filter i{background:var(--white);padding:12px 13px;border-radius:14px;font-size:14px;color:var(--ink-soft);border:1px solid var(--line);}
+
+  .tx-item{
+    display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:16px;
+    background:var(--white);margin-bottom:8px;box-shadow:0 1px 0 var(--line);cursor:pointer;
+  }
+  .tx-left{display:flex;align-items:center;gap:12px;}
+  .tx-icon{
+    background:var(--paper-dim);width:42px;height:42px;border-radius:13px;display:flex;align-items:center;
+    justify-content:center;font-size:18px;
+  }
+  .tx-info .tx-name{font-weight:600;font-size:13.5px;color:var(--ink);}
+  .tx-info .tx-cat{margin-top:3px;}
+  .tx-amount{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13.5px;}
+  .tx-amount.negative{color:var(--coral);}
+  .tx-amount.positive{color:var(--mint);}
+  .category-badge{padding:3px 9px;border-radius:40px;font-size:10px;font-weight:600;background:var(--paper-dim);color:var(--ink-soft);}
+
+  .error-state{
+    background:var(--coral-soft);padding:14px;border-radius:16px;margin:10px 0;display:flex;
+    align-items:center;gap:11px;color:#8a3323;font-size:13px;font-weight:500;
+  }
+  .error-state i{font-size:17px;}
+
+  /* ---- PAYMENT ---- */
+  .pay-header{display:flex;align-items:center;gap:12px;margin:18px 0 18px;}
+  .back-btn{
+    width:34px;height:34px;border-radius:11px;background:var(--white);display:flex;align-items:center;
+    justify-content:center;color:var(--ink-soft);box-shadow:0 1px 0 var(--line);font-size:13px;cursor:pointer;
+  }
+  .pay-header span{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--ink);}
+
+  .field-label{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:7px;display:block;}
+  .field{margin-bottom:16px;}
+  select#bankSelect, input#accountNumber, input#accountName{
+    width:100%;padding:14px 15px;border-radius:15px;border:1px solid var(--line);
+    font-size:14px;font-family:'Sora',sans-serif;background:var(--white);color:var(--ink);outline:none;
+    transition:.15s;
+  }
+  input#accountNumber{font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;}
+  select#bankSelect:focus, input#accountNumber:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(45,62,99,0.1);}
+  input#accountName.auto-filled{background:var(--mint-soft);color:#1e5c40;font-weight:600;border-color:var(--mint);}
+
+  .amount-input-wrap{
+    display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--line);
+    border-radius:15px;padding:14px 15px;transition:.15s;
+  }
+  .amount-input-wrap:focus-within{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(45,62,99,0.1);}
+  .amount-prefix{font-size:16px;font-weight:600;color:var(--muted);}
+  #amountInput{
+    border:none;outline:none;flex:1;font-size:18px;font-weight:600;color:var(--ink);
+    background:transparent;font-family:'IBM Plex Mono',monospace;
+  }
+  .quick-amount{
+    background:var(--white);padding:10px 17px;border-radius:40px;font-weight:600;font-size:13px;
+    color:var(--ink-soft);cursor:pointer;transition:.15s;border:1px solid var(--line);
+  }
+  .quick-amount.active{background:var(--ink);color:var(--gold-soft);border-color:var(--ink);}
+
+  .primary-btn{
+    background:var(--ink);color:var(--white);border:none;padding:16px;border-radius:16px;font-weight:600;
+    width:100%;font-size:14.5px;margin:6px 0 4px;transition:.15s;cursor:pointer;font-family:'Sora',sans-serif;
+    letter-spacing:0.2px;box-shadow:0 8px 18px rgba(11,18,32,0.22);
+  }
+  .primary-btn:active{transform:scale(0.98);}
+  .primary-btn:disabled{background:#D9D3C4;color:#A8A08D;cursor:not-allowed;box-shadow:none;}
+
+  /* ---- SAVINGS ---- */
+  .goal-item{
+    display:flex;align-items:center;gap:14px;background:var(--white);padding:14px;border-radius:18px;
+    margin:0 0 10px;box-shadow:0 1px 0 var(--line);
+  }
+  .progress-ring{
+    width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);font-size:12.5px;position:relative;
+  }
+  .progress-ring::before{content:"";position:absolute;inset:5px;background:var(--white);border-radius:50%;}
+  .progress-ring span{position:relative;z-index:1;}
+  .goal-info{flex:1;}
+  .goal-info strong{display:block;font-size:13.5px;color:var(--ink);font-weight:600;}
+  .goal-info .text-muted{font-size:12px;font-family:'IBM Plex Mono',monospace;}
+  .goal-actions{display:flex;gap:6px;}
+  .goal-actions button{
+    background:var(--paper-dim);border:none;padding:8px 13px;border-radius:40px;font-weight:600;font-size:11px;
+    color:var(--ink-soft);font-family:'Sora',sans-serif;
+  }
+
+  /* ---- PROFILE ---- */
+  .profile-header-card{
+    display:flex;align-items:center;gap:14px;background:var(--white);border-radius:20px;
+    padding:16px;margin-top:16px;box-shadow:0 1px 0 var(--line);
+  }
+  .profile-avatar{
+    width:52px;height:52px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--ink) 0%, var(--indigo) 100%);color:var(--gold-soft);
+    display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;
+    font-weight:600;font-size:18px;letter-spacing:0.3px;
+  }
+  .profile-avatar-lg{width:76px;height:76px;font-size:24px;}
+  .profile-header-info{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .profile-header-info strong{font-size:15px;color:var(--ink);font-weight:600;}
+  .profile-header-info span{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .edit-profile-btn{
+    background:var(--paper-dim);border:none;padding:9px 14px;border-radius:40px;font-weight:600;
+    font-size:12px;color:var(--ink-soft);font-family:'Sora',sans-serif;cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;gap:6px;
+  }
+  .save-toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--white);padding:11px 18px;border-radius:40px;font-size:12.5px;
+    font-weight:600;display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;
+    transition:.25s;z-index:80;box-shadow:0 10px 24px rgba(0,0,0,0.25);
+  }
+  .save-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .save-toast i{color:var(--mint);}
+
+  .profile-item{
+    display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);
+    font-size:13.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+  }
+  .profile-item i.left-i{width:22px;color:var(--ink-soft);margin-right:10px;}
+  .profile-item .fa-chevron-right{color:var(--muted);font-size:12px;}
+
+  .text-muted{color:var(--muted);}
+
+  /* account verification state */
+  .field-hint{font-size:11px;color:var(--muted);margin-top:6px;}
+  input#accountName.invalid{background:var(--coral-soft);color:#8a3323;font-weight:600;border-color:var(--coral);}
+
+  /* success overlay + receipt */
+  .success-overlay{
+    position:absolute;inset:0;background:rgba(11,18,32,0.6);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:50;border-radius:38px;
+    padding:20px;overflow-y:auto;
+  }
+  .success-overlay.show{display:flex;animation:fadeSlide .2s ease;}
+  .receipt-card{
+    background:var(--paper);border-radius:22px;width:100%;text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);position:relative;overflow:hidden;
+  }
+  .receipt-top{padding:26px 24px 18px;}
+  .success-icon{
+    width:52px;height:52px;border-radius:50%;background:var(--mint-soft);color:var(--mint);
+    display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px;
+  }
+  .receipt-card h3{font-family:'Fraunces',serif;font-size:19px;color:var(--ink);margin-bottom:5px;}
+  .receipt-card .receipt-sub{font-size:12.5px;color:var(--muted);}
+  .receipt-amount{
+    font-family:'Fraunces',serif;font-size:30px;font-weight:500;color:var(--ink);margin:16px 0 2px;
+  }
+  .status-badge{
+    display:inline-block;background:var(--mint-soft);color:#1e5c40;font-size:10.5px;font-weight:700;
+    letter-spacing:0.4px;text-transform:uppercase;padding:4px 11px;border-radius:40px;margin-top:6px;
+  }
+  .status-badge.negative{background:var(--coral-soft);color:#8a3323;}
+  .perforation{position:relative;height:0;border-top:1.5px dashed var(--line);}
+  .perforation::before,.perforation::after{
+    content:"";position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;
+    background:rgba(11,18,32,0.6);
+  }
+  .perforation::before{left:-33px;}
+  .perforation::after{right:-33px;}
+  .receipt-detail{
+    background:var(--white);padding:16px 24px;text-align:left;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);
+  }
+  .receipt-detail div{display:flex;justify-content:space-between;padding:5px 0;}
+  .receipt-detail div span:first-child{color:var(--muted);}
+  .receipt-detail div span:last-child{font-weight:600;color:var(--ink);text-align:right;}
+  .receipt-barcode{
+    height:34px;margin:16px 24px 4px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 2px, transparent 2px 5px, var(--ink) 5px 6px, transparent 6px 10px, var(--ink) 10px 13px, transparent 13px 15px);
+    opacity:0.75;
+  }
+  .receipt-ref{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin:6px 24px 20px;letter-spacing:0.5px;}
+  .receipt-actions{display:flex;gap:8px;padding:0 24px 24px;}
+  .receipt-actions .primary-btn{margin:0;}
+  .ghost-btn{
+    background:var(--paper-dim);color:var(--ink-soft);border:none;padding:16px;border-radius:16px;
+    font-weight:600;font-size:14px;flex:1;font-family:'Sora',sans-serif;cursor:pointer;
+  }
+
+  /* loading overlay (between confirm and success) */
+  .loading-overlay{
+    position:absolute;inset:0;background:rgba(11,18,32,0.6);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:55;border-radius:38px;
+  }
+  .loading-overlay.show{display:flex;animation:fadeSlide .15s ease;}
+  .loading-card{
+    background:var(--paper);border-radius:22px;padding:34px 30px;text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  .spinner{
+    width:40px;height:40px;border-radius:50%;margin:0 auto 16px;
+    border:3px solid var(--paper-dim);border-top-color:var(--ink);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-card p{font-size:13px;font-weight:600;color:var(--ink-soft);}
+
+  /* nav */
+  .nav-tabs{
+    display:flex;justify-content:space-around;padding:12px 12px 6px;margin-top:6px;background:var(--paper);
+  }
+  .nav-tabs .tab-item{
+    display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:var(--muted);
+    font-weight:600;cursor:pointer;padding:6px 12px;border-radius:14px;transition:.15s;gap:3px;
+  }
+  .nav-tabs .tab-item i{font-size:17px;}
+  .nav-tabs .tab-item.active{color:var(--ink);background:var(--paper-dim);}
+
+  .gesture-hint{font-size:10px;color:#A79F8A;text-align:center;margin:4px 0 0;letter-spacing:0.3px;}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+  <div class="screen-header">
+    <div class="brand" data-target="screen-profile" style="cursor:pointer;">
+      <div class="brand-mark" id="headerAvatar">OA</div>
+      <h2 id="greetingName">Hi, Ola</h2>
+    </div>
+    <div class="header-actions">
+      <div class="icon-btn"><i class="fas fa-bell"></i></div>
+      <div class="icon-btn" data-target="screen-profile" style="cursor:pointer;"><i class="fas fa-user"></i></div>
+    </div>
+  </div>
+
+  <div class="screen-container">
+    <!-- HOME -->
+    <div id="screen-home" class="screen active">
+      <div class="balance-card">
+        <div class="balance-row">
+          <span class="balance-label">Total balance</span>
+          <div style="display:flex;gap:8px;position:relative;z-index:1;">
+            <span class="mask-toggle" id="editBalanceToggle"><i class="fas fa-pen"></i></span>
+            <span class="mask-toggle" id="maskToggle"><i class="fas fa-eye"></i></span>
+          </div>
+        </div>
+        <div class="balance-amount" id="balanceAmountWrap">
+          <span id="balanceNumber" class="num">₦ 2,450,000.00</span>
+          <div class="balance-edit-row" id="balanceEditRow" style="display:none;">
+            <span class="num" style="opacity:0.6;">₦</span>
+            <input id="balanceEditInput" class="num balance-edit-input" type="text" inputmode="numeric">
+            <span class="balance-edit-confirm" id="balanceEditConfirm"><i class="fas fa-check"></i></span>
+          </div>
+        </div>
+        <div class="balance-split">
+          <div>Income<strong id="incomeAmount">+₦340,000</strong></div>
+          <div>Expenses<strong id="expenseAmount">−₦128,000</strong></div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <div class="quick-action" data-target="screen-payment"><i class="fas fa-paper-plane"></i><span>Send</span></div>
+        <div class="quick-action" data-target="screen-payment"><i class="fas fa-credit-card"></i><span>Pay</span></div>
+        <div class="quick-action"><i class="fas fa-hand-holding-dollar"></i><span>Request</span></div>
+        <div class="quick-action"><i class="fas fa-qrcode"></i><span>Scan</span></div>
+      </div>
+
+      <div class="section-label">Insights</div>
+      <div class="insight-box"><i class="fas fa-seedling"></i> On track to save ₦50,000 this month</div>
+      <div class="insight-box gold"><i class="fas fa-chart-line"></i> Spending 12% less than last week</div>
+      <div class="insight-box coral"><i class="fas fa-clock"></i> Upcoming bill: ₦15,000 due in 2 days</div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div id="screen-transactions" class="screen">
+      <div class="section-label" style="margin-top:16px;">Transactions</div>
+      <div class="search-filter">
+        <input type="text" placeholder="Search merchant or category" id="txSearch">
+        <i class="fas fa-sliders-h"></i>
+      </div>
+      <div id="transactionList" class="transaction-feed"></div>
+      <div class="error-state" id="txError" style="display:none;"><i class="fas fa-circle-exclamation"></i> No transactions match. Try a different search.</div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div id="screen-payment" class="screen">
+      <div class="pay-header">
+        <div class="back-btn" data-target="screen-home"><i class="fas fa-arrow-left"></i></div>
+        <span>Bank transfer</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="bankSelect">Bank</label>
+        <select id="bankSelect">
+          <option value="">Select bank</option>
+          <option>Access Bank</option>
+          <option>First Bank</option>
+          <option>GTBank</option>
+          <option>UBA</option>
+          <option>Zenith Bank</option>
+          <option>Opay</option>
+          <option>Moniepoint</option>
+          <option>Palmpay</option>
+          <option>Kuda</option>
+          <option>Fidelity Bank</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="accountNumber">Account number</label>
+        <input id="accountNumber" type="text" inputmode="numeric" maxlength="10" placeholder="0123456789">
+        <div class="field-hint">Enter any 10-digit account number to verify</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="accountName">Account name</label>
+        <input id="accountName" type="text" value="" placeholder="Appears once verified ">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="amountInput">Amount</label>
+        <div class="amount-input-wrap">
+          <span class="amount-prefix num">₦</span>
+          <input id="amountInput" type="text" inputmode="numeric" class="num" placeholder="0" value="1,000">
+        </div>
+        <div class="field-hint" id="balanceHint">Available balance: ₦2,450,000</div>
+      </div>
+      <div class="quick-amount-grid" id="quickAmounts">
+        <span class="quick-amount active" data-amount="1000">₦1k</span>
+        <span class="quick-amount" data-amount="5000">₦5k</span>
+        <span class="quick-amount" data-amount="10000">₦10k</span>
+        <span class="quick-amount" data-amount="20000">₦20k</span>
+        <span class="quick-amount" data-amount="50000">₦50k</span>
+      </div>
+
+      <button class="primary-btn" id="payNowBtn" disabled> Transfer</button>
+    </div>
+
+    <!-- SAVINGS -->
+    <div id="screen-savings" class="screen">
+      <div class="section-label" style="margin-top:16px;">Goals</div>
+      <div class="goal-item">
+        <div class="progress-ring" style="background:conic-gradient(var(--mint) 0% 75%, var(--paper-dim) 75% 100%);"><span>75%</span></div>
+        <div class="goal-info"><strong>Emergency fund</strong><span class="text-muted">₦750,000 / ₦1,000,000</span></div>
+        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+      </div>
+      <div class="goal-item">
+        <div class="progress-ring" style="background:conic-gradient(var(--gold) 0% 40%, var(--paper-dim) 40% 100%);"><span>40%</span></div>
+        <div class="goal-info"><strong>Vacation</strong><span class="text-muted">₦400,000 / ₦1,000,000</span></div>
+        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+      </div>
+      <div class="goal-item">
+        <div class="progress-ring" style="background:conic-gradient(var(--indigo) 0% 90%, var(--paper-dim) 90% 100%);"><span>90%</span></div>
+        <div class="goal-info"><strong>New laptop</strong><span class="text-muted">₦900,000 / ₦1,000,000</span></div>
+        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+      </div>
+      <button class="primary-btn"><i class="fas fa-circle-plus"></i> New goal</button>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="screen-profile" class="screen">
+      <div class="profile-header-card">
+        <div class="profile-avatar" id="profileAvatar">OA</div>
+        <div class="profile-header-info">
+          <strong id="profileNameDisplay">Ola ijeyemi</strong>
+          <span id="profileEmailDisplay">ola.adeyemi@email.com</span>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Account</div>
+      <div class="profile-item" id="editProfileBtn"><span><i class="fas fa-pen left-i"></i>Edit profile</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item"><span><i class="fas fa-shield-halved left-i"></i>Security center</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item"><span><i class="fas fa-credit-card left-i"></i>Card management</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item"><span><i class="fas fa-bell left-i"></i>Notification preferences</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item"><span><i class="fas fa-link left-i"></i>Connected accounts</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item"><span><i class="fas fa-gear left-i"></i>Account settings</span><i class="fas fa-chevron-right"></i></div>
+      <button class="primary-btn" style="background:var(--coral); margin-top:22px;">Log out</button>
+    </div>
+
+    <!-- EDIT PROFILE -->
+    <div id="screen-profile-edit" class="screen">
+      <div class="pay-header">
+        <div class="back-btn" data-target="screen-profile"><i class="fas fa-arrow-left"></i></div>
+        <span>Edit profile</span>
+      </div>
+
+      <div style="display:flex;justify-content:center;margin-bottom:20px;">
+        <div class="profile-avatar profile-avatar-lg" id="profileAvatarEdit">OA</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="editName">Full name</label>
+        <input id="editName" type="text" placeholder="Your full name" value="Ola Adeyemi">
+      </div>
+      <div class="field">
+        <label class="field-label" for="editEmail">Email</label>
+        <input id="editEmail" type="email" placeholder="you@email.com" value="ola.adeyemi@email.com">
+      </div>
+      <div class="field">
+        <label class="field-label" for="editPhone">Phone number</label>
+        <input id="editPhone" type="tel" placeholder="+234 800 000 0000" value="+234 801 234 5678">
+      </div>
+
+      <div class="receipt-actions" style="padding:0;margin-top:8px;">
+        <button class="ghost-btn" data-target="screen-profile">Cancel</button>
+        <button class="primary-btn" id="saveProfileBtn">Save changes</button>
+      </div>
+      <div class="save-toast" id="saveToast"><i class="fas fa-check"></i> Profile updated</div>
+    </div>
+
+    <!-- CONFIRMATION OVERLAY -->
+    <div class="success-overlay" id="confirmOverlay">
+      <div class="receipt-card">
+        <div class="receipt-top">
+          <div class="success-icon" style="background:var(--gold-soft);color:#9c6c1c;"><i class="fas fa-paper-plane"></i></div>
+          <h3>Confirm transfer</h3>
+          <p class="receipt-sub">Check the details before you send.</p>
+          <div class="receipt-amount num" id="confirmAmount">₦1,000</div>
+        </div>
+        <div class="perforation"></div>
+        <div class="receipt-detail" id="confirmDetail"></div>
+        <div class="receipt-actions">
+          <button class="ghost-btn" id="confirmBackBtn">Edit</button>
+          <button class="primary-btn" id="confirmSendBtn">Confirm &amp; send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <p>Processing transfer…</p>
+      </div>
+    </div>
+
+    <!-- SUCCESS OVERLAY / RECEIPT -->
+    <div class="success-overlay" id="successOverlay">
+      <div class="receipt-card" id="receiptCard">
+        <div class="receipt-top">
+          <div class="success-icon" id="receiptIcon"><i class="fas fa-check"></i></div>
+          <h3 id="receiptTitle">Transfer successful</h3>
+          <p class="receipt-sub" id="receiptSub">Your money is on its way.</p>
+          <div class="receipt-amount num" id="receiptAmount">₦1,000</div>
+          <span class="status-badge" id="receiptStatusBadge"><i class="fas fa-circle-check"></i> Completed</span>
+        </div>
+        <div class="perforation"></div>
+        <div class="receipt-detail" id="receiptDetail"></div>
+        <div class="receipt-barcode"></div>
+        <div class="receipt-ref" id="receiptRef"></div>
+        <div class="receipt-actions">
+          <button class="ghost-btn" id="shareReceiptBtn"><i class="fas fa-share-nodes"></i> Share</button>
+          <button class="primary-btn" id="successDoneBtn">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="tab-item active" data-target="screen-home"><i class="fas fa-house"></i><span>Home</span></div>
+    <div class="tab-item" data-target="screen-transactions"><i class="fas fa-list-ul"></i><span>Activity</span></div>
+    <div class="tab-item" data-target="screen-payment"><i class="fas fa-arrow-up"></i><span>Pay</span></div>
+    <div class="tab-item" data-target="screen-savings"><i class="fas fa-piggy-bank"></i><span>Savings</span></div>
+    <div class="tab-item" data-target="screen-profile"><i class="fas fa-user"></i><span>Profile</span></div>
+  </div>
+
+  <div class="gesture-hint"><i class="fas fa-arrows-up-down"></i> swipe · pull to refresh</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+  // ---------- DATA ----------
+  const transactions = [
+    { name:'Starbucks', category:'Food', amount:-4500, icon:'☕', bank:'GTBank', account:'0123456789', date:'28 Jun 2026', time:'09:14', ref:'FIN-482910337' },
+    { name:'Salary', category:'Income', amount:340000, icon:'💰', bank:'First Bank', account:'0123456789', date:'25 Jun 2026', time:'08:00', ref:'FIN-317205841' },
+    { name:'Uber', category:'Transport', amount:-3200, icon:'🚗', bank:'Opay', account:'2233445566', date:'24 Jun 2026', time:'18:47', ref:'FIN-609183422' },
+    { name:'Netflix', category:'Entertainment', amount:-1800, icon:'🎬', bank:'GTBank', account:'5566778899', date:'22 Jun 2026', time:'06:03', ref:'FIN-773029981' },
+    { name:'Grocery', category:'Food', amount:-12500, icon:'🛒', bank:'Zenith Bank', account:'0123456789', date:'20 Jun 2026', time:'17:22', ref:'FIN-118475602' },
+    { name:'Freelance', category:'Income', amount:75000, icon:'💻', bank:'Kuda', account:'2233445566', date:'18 Jun 2026', time:'11:35', ref:'FIN-925540173' },
+  ];
+
+  // known demo accounts resolve to a fixed name; any other 10-digit number
+  // still resolves deterministically (same number always → same name), the
+  // way a real bank's name-lookup would behave
+  const demoAccounts = {
+    '0123456789': 'Adaeze Okafor',
+    '2233445566': 'Tunde Balogun',
+    '5566778899': 'Ifeoma Chukwu'
+  };
+  const namePool = ['Emeka Nwosu','Bisi Adeyemi','Chinedu Eze','Kemi Fashola','Ngozi Umeh','Segun Adebayo','Fatima Bello','Obinna Chukwuma','Yetunde Alabi','Musa Ibrahim'];
+  function resolveAccountName(accNum){
+    if (demoAccounts[accNum]) return demoAccounts[accNum];
+    let seed = 0;
+    for (const ch of accNum) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    return namePool[seed % namePool.length];
+  }
+
+  // ---------- DOM ----------
+  const screens = {
+    'screen-home': document.getElementById('screen-home'),
+    'screen-transactions': document.getElementById('screen-transactions'),
+    'screen-payment': document.getElementById('screen-payment'),
+    'screen-savings': document.getElementById('screen-savings'),
+    'screen-profile': document.getElementById('screen-profile'),
+    'screen-profile-edit': document.getElementById('screen-profile-edit'),
+  };
+  const tabs = document.querySelectorAll('.tab-item');
+  const txList = document.getElementById('transactionList');
+  const txError = document.getElementById('txError');
+  const txSearch = document.getElementById('txSearch');
+  const balanceNum = document.getElementById('balanceNumber');
+  const maskToggle = document.getElementById('maskToggle');
+  const editBalanceToggle = document.getElementById('editBalanceToggle');
+  const balanceEditRow = document.getElementById('balanceEditRow');
+  const balanceEditInput = document.getElementById('balanceEditInput');
+  const balanceEditConfirm = document.getElementById('balanceEditConfirm');
+  const incomeAmount = document.getElementById('incomeAmount');
+  const expenseAmount = document.getElementById('expenseAmount');
+  const balanceHint = document.getElementById('balanceHint');
+  let balanceMasked = false;
+  let balanceRaw = 2450000;
+  let expensesRaw = 128000;
+
+  const bankSelect = document.getElementById('bankSelect');
+  const accountNumber = document.getElementById('accountNumber');
+  const accountName = document.getElementById('accountName');
+  const quickAmounts = document.querySelectorAll('.quick-amount');
+  const amountInput = document.getElementById('amountInput');
+  const payNowBtn = document.getElementById('payNowBtn');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const confirmAmount = document.getElementById('confirmAmount');
+  const confirmDetail = document.getElementById('confirmDetail');
+  const confirmBackBtn = document.getElementById('confirmBackBtn');
+  const confirmSendBtn = document.getElementById('confirmSendBtn');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const successOverlay = document.getElementById('successOverlay');
+  const receiptCard = document.getElementById('receiptCard');
+  const receiptIcon = document.getElementById('receiptIcon');
+  const receiptTitle = document.getElementById('receiptTitle');
+  const receiptSub = document.getElementById('receiptSub');
+  const receiptStatusBadge = document.getElementById('receiptStatusBadge');
+  const receiptAmount = document.getElementById('receiptAmount');
+  const receiptDetail = document.getElementById('receiptDetail');
+  const receiptRef = document.getElementById('receiptRef');
+  const successDoneBtn = document.getElementById('successDoneBtn');
+  const shareReceiptBtn = document.getElementById('shareReceiptBtn');
+
+  const profile = { name: 'Ola Adeyemi', email: 'ola.adeyemi@email.com', phone: '+234 801 234 5678' };
+  const profileNameDisplay = document.getElementById('profileNameDisplay');
+  const profileEmailDisplay = document.getElementById('profileEmailDisplay');
+  const profileAvatar = document.getElementById('profileAvatar');
+  const profileAvatarEdit = document.getElementById('profileAvatarEdit');
+  const editProfileBtn = document.getElementById('editProfileBtn');
+  const editName = document.getElementById('editName');
+  const editEmail = document.getElementById('editEmail');
+  const editPhone = document.getElementById('editPhone');
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  const saveToast = document.getElementById('saveToast');
+  const greetingName = document.getElementById('greetingName');
+  const headerAvatar = document.getElementById('headerAvatar');
+  let selectedAmount = 1000;
+  // when viewing a past transaction's receipt (read-only mode), this holds it;
+  // null means we're looking at a receipt for a transfer just made
+  let viewingTx = null;
+
+  // ---------- TRANSACTIONS ----------
+  function renderTransactions(filter=''){
+    const f = filter.toLowerCase();
+    const filtered = transactions.filter(tx =>
+      tx.name.toLowerCase().includes(f) || tx.category.toLowerCase().includes(f)
+    );
+    if (filtered.length === 0){
+      txList.innerHTML = '';
+      txError.style.display = 'flex';
+      return;
+    }
+    txError.style.display = 'none';
+    txList.innerHTML = filtered.map((tx, i) => `
+      <div class="tx-item" data-tx-ref="${tx.ref}">
+        <div class="tx-left">
+          <div class="tx-icon">${tx.icon}</div>
+          <div class="tx-info">
+            <div class="tx-name">${tx.name}</div>
+            <div class="tx-cat"><span class="category-badge">${tx.category}</span></div>
+          </div>
+        </div>
+        <div class="tx-amount ${tx.amount > 0 ? 'positive' : 'negative'} num">${tx.amount > 0 ? '+' : '−'}₦${Math.abs(tx.amount).toLocaleString()}</div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- NAVIGATION ----------
+  function navigateTo(id){
+    Object.keys(screens).forEach(key => screens[key].classList.toggle('active', key === id));
+    tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.target === id));
+    if (id === 'screen-transactions') renderTransactions(txSearch.value);
+  }
+  document.querySelectorAll('[data-target]').forEach(el => {
+    el.addEventListener('click', () => navigateTo(el.dataset.target));
+  });
+
+  // ---------- BALANCE ----------
+  function formatNaira(n){
+    return '₦ ' + Math.max(0, n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function renderBalance(){
+    balanceNum.innerText = balanceMasked ? '₦ ••••••' : formatNaira(balanceRaw);
+    balanceHint.innerText = `Available balance: ${formatNaira(balanceRaw)}`;
+  }
+  renderBalance();
+
+  maskToggle.addEventListener('click', function(){
+    balanceMasked = !balanceMasked;
+    renderBalance();
+    this.innerHTML = balanceMasked ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  });
+
+  editBalanceToggle.addEventListener('click', () => {
+    balanceNum.style.display = 'none';
+    balanceEditRow.style.display = 'flex';
+    balanceEditInput.value = balanceRaw;
+    balanceEditInput.focus();
+    balanceEditInput.select();
+  });
+
+  function commitBalanceEdit(){
+    const digits = balanceEditInput.value.replace(/\D/g, '');
+    if (digits) balanceRaw = Number(digits);
+    balanceNum.style.display = '';
+    balanceEditRow.style.display = 'none';
+    renderBalance();
+    validateTransfer();
+  }
+  balanceEditConfirm.addEventListener('click', commitBalanceEdit);
+  balanceEditInput.addEventListener('keydown', e => { if (e.key === 'Enter') commitBalanceEdit(); });
+  balanceEditInput.addEventListener('blur', commitBalanceEdit);
+
+  // ---------- PAYMENT VALIDATION ----------
+  function validateTransfer(){
+    const hasFunds = selectedAmount > 0 && selectedAmount <= balanceRaw;
+    const ready = bankSelect.value !== '' && accountNumber.value.length === 10 &&
+      accountName.value.trim() !== '' && hasFunds;
+    payNowBtn.disabled = !ready;
+    if (selectedAmount > balanceRaw){
+      balanceHint.innerText = 'Insufficient balance for this amount';
+      balanceHint.style.color = 'var(--coral)';
+    } else {
+      balanceHint.innerText = `Available balance: ${formatNaira(balanceRaw)}`;
+      balanceHint.style.color = '';
+    }
+  }
+
+  bankSelect.addEventListener('change', validateTransfer);
+
+  accountNumber.addEventListener('input', () => {
+    accountNumber.value = accountNumber.value.replace(/\D/g, '').slice(0, 10);
+    if (accountNumber.value.length === 10){
+      accountName.value = resolveAccountName(accountNumber.value);
+      accountName.classList.add('auto-filled');
+    } else {
+      accountName.value = '';
+      accountName.classList.remove('auto-filled');
+    }
+    validateTransfer();
+  });
+
+  accountName.addEventListener('input', () => {
+    // once the person edits the name themselves, drop the auto-filled styling
+    accountName.classList.remove('auto-filled');
+    validateTransfer();
+  });
+
+  // ---------- AMOUNT ----------
+  function setAmount(value){
+    selectedAmount = Math.max(0, Math.floor(value) || 0);
+    amountInput.value = selectedAmount ? selectedAmount.toLocaleString() : '';
+    quickAmounts.forEach(x => x.classList.toggle('active', Number(x.dataset.amount) === selectedAmount));
+    validateTransfer();
+  }
+
+  amountInput.addEventListener('input', () => {
+    const digits = amountInput.value.replace(/\D/g, '');
+    selectedAmount = digits ? Number(digits) : 0;
+    amountInput.value = digits ? Number(digits).toLocaleString() : '';
+    quickAmounts.forEach(x => x.classList.toggle('active', Number(x.dataset.amount) === selectedAmount));
+    validateTransfer();
+  });
+
+  quickAmounts.forEach(item => {
+    item.addEventListener('click', () => setAmount(Number(item.dataset.amount)));
+  });
+
+  function generateRef(){
+    const rand = Math.floor(100000000 + Math.random() * 899999999);
+    return 'FIN-' + rand;
+  }
+
+  // ---------- REVIEW → CONFIRM → LOADING → SUCCESS ----------
+  payNowBtn.addEventListener('click', () => {
+    if (payNowBtn.disabled) return;
+    confirmAmount.innerText = `₦${selectedAmount.toLocaleString()}`;
+    confirmDetail.innerHTML = `
+      <div><span>Recipient</span><span>${accountName.value}</span></div>
+      <div><span>Bank</span><span>${bankSelect.value}</span></div>
+      <div><span>Account</span><span>${accountNumber.value}</span></div>
+    `;
+    confirmOverlay.classList.add('show');
+  });
+
+  confirmBackBtn.addEventListener('click', () => {
+    confirmOverlay.classList.remove('show');
+  });
+
+  confirmSendBtn.addEventListener('click', () => {
+    confirmOverlay.classList.remove('show');
+    loadingOverlay.classList.add('show');
+
+    // simulate processing time before showing the receipt
+    setTimeout(() => {
+      const ref = generateRef();
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+
+      // move money: deduct from balance, add to expenses, log the transaction
+      balanceRaw -= selectedAmount;
+      expensesRaw += selectedAmount;
+      renderBalance();
+      expenseAmount.innerText = `−${formatNaira(expensesRaw).replace('₦ ', '₦')}`;
+      transactions.unshift({
+        name: accountName.value, category: 'Transfer', amount: -selectedAmount, icon: '🏦',
+        bank: bankSelect.value, account: accountNumber.value, date: dateStr, time: timeStr, ref: ref
+      });
+
+      viewingTx = null;
+      showReceipt({
+        name: accountName.value, bank: bankSelect.value, account: accountNumber.value,
+        date: dateStr, time: timeStr, ref: ref, amount: -selectedAmount
+      });
+
+      loadingOverlay.classList.remove('show');
+      successOverlay.classList.add('show');
+    }, 1400);
+  });
+
+  // ---------- RECEIPT RENDERING (shared by new transfers & past transactions) ----------
+  function showReceipt(tx){
+    const isCredit = tx.amount > 0;
+    receiptAmount.innerText = `₦${Math.abs(tx.amount).toLocaleString()}`;
+    receiptDetail.innerHTML = `
+      <div><span>${isCredit ? 'From' : 'Recipient'}</span><span>${tx.name}</span></div>
+      <div><span>Bank</span><span>${tx.bank || '—'}</span></div>
+      <div><span>Account</span><span>${tx.account || '—'}</span></div>
+      <div><span>Date</span><span>${tx.date}</span></div>
+      <div><span>Time</span><span>${tx.time}</span></div>
+    `;
+    receiptRef.innerText = `Reference: ${tx.ref}`;
+    if (isCredit){
+      receiptIcon.style.background = 'var(--mint-soft)';
+      receiptIcon.style.color = 'var(--mint)';
+      receiptIcon.innerHTML = '<i class="fas fa-arrow-down"></i>';
+      receiptTitle.innerText = 'Money received';
+      receiptSub.innerText = 'Funds have landed in your account.';
+      receiptStatusBadge.className = 'status-badge';
+      receiptStatusBadge.innerHTML = '<i class="fas fa-circle-check"></i> Completed';
+    } else {
+      receiptIcon.style.background = 'var(--mint-soft)';
+      receiptIcon.style.color = 'var(--mint)';
+      receiptIcon.innerHTML = '<i class="fas fa-check"></i>';
+      receiptTitle.innerText = 'Transfer successful';
+      receiptSub.innerText = 'Your money is on its way.';
+      receiptStatusBadge.className = 'status-badge';
+      receiptStatusBadge.innerHTML = '<i class="fas fa-circle-check"></i> Completed';
+    }
+  }
+
+  // tapping a past transaction opens its receipt (read-only, no loading step needed)
+  txList.addEventListener('click', (e) => {
+    const item = e.target.closest('.tx-item');
+    if (!item) return;
+    // ignore taps that are actually the tail end of a swipe-to-delete gesture
+    if (item.style.transform && item.style.transform !== 'translateX(0px)' && item.style.transform !== '') return;
+    const ref = item.dataset.txRef;
+    const tx = transactions.find(t => t.ref === ref);
+    if (!tx) return;
+    viewingTx = tx;
+    showReceipt(tx);
+    successOverlay.classList.add('show');
+  });
+
+  // ---------- SHARE RECEIPT AS IMAGE ----------
+  shareReceiptBtn.addEventListener('click', () => {
+    const originalHTML = shareReceiptBtn.innerHTML;
+    shareReceiptBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    html2canvas(receiptCard, {
+      backgroundColor: '#FAF7F1',
+      scale: 2,
+      useCORS: true
+    }).then(canvas => {
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `finly-receipt-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        shareReceiptBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+        setTimeout(() => { shareReceiptBtn.innerHTML = originalHTML; }, 1400);
+      });
+    }).catch(() => {
+      shareReceiptBtn.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Failed';
+      setTimeout(() => { shareReceiptBtn.innerHTML = originalHTML; }, 1400);
+    });
+  });
+
+  successDoneBtn.addEventListener('click', () => {
+    successOverlay.classList.remove('show');
+    if (viewingTx){
+      // just closing a past-transaction receipt, nothing to reset
+      viewingTx = null;
+      return;
+    }
+    // reset the transfer form for the next transfer
+    bankSelect.value = '';
+    accountNumber.value = '';
+    accountName.value = '';
+    accountName.classList.remove('auto-filled');
+    setAmount(1000);
+    validateTransfer();
+    navigateTo('screen-home');
+  });
+
+  // ---------- PROFILE ----------
+  function initials(name){
+    return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+  function renderProfile(){
+    profileNameDisplay.innerText = profile.name;
+    profileEmailDisplay.innerText = profile.email;
+    const ini = initials(profile.name) || 'U';
+    profileAvatar.innerText = ini;
+    profileAvatarEdit.innerText = ini;
+    const firstName = profile.name.trim().split(/\s+/)[0] || 'there';
+    greetingName.innerText = `Hi, ${firstName}`;
+    headerAvatar.innerText = ini;
+  }
+  renderProfile();
+
+  editProfileBtn.addEventListener('click', () => {
+    editName.value = profile.name;
+    editEmail.value = profile.email;
+    editPhone.value = profile.phone;
+    navigateTo('screen-profile-edit');
+  });
+
+  saveProfileBtn.addEventListener('click', () => {
+    if (editName.value.trim() === ''){
+      editName.focus();
+      return;
+    }
+    profile.name = editName.value.trim();
+    profile.email = editEmail.value.trim();
+    profile.phone = editPhone.value.trim();
+    renderProfile();
+    saveToast.classList.add('show');
+    setTimeout(() => saveToast.classList.remove('show'), 1800);
+    navigateTo('screen-profile');
+  });
+
+
+  // ---------- SEARCH ----------
+  txSearch.addEventListener('input', e => renderTransactions(e.target.value));
+
+  // ---------- PULL TO REFRESH ----------
+  let startY = 0;
+  const container = document.querySelector('.screen-container');
+  container.addEventListener('touchstart', e => { startY = e.touches[0].clientY; });
+  container.addEventListener('touchmove', e => {
+    const delta = e.touches[0].clientY - startY;
+    if (delta > 80 && !container.classList.contains('refreshing')){
+      container.classList.add('refreshing');
+      const active = document.querySelector('.screen.active');
+      if (active){
+        const skel = document.createElement('div');
+        skel.style.cssText = 'height:44px;border-radius:16px;margin:10px 0;background:linear-gradient(90deg,#eee7d8 25%,#f6f1e6 50%,#eee7d8 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;';
+        active.prepend(skel);
+        setTimeout(() => skel.remove(), 1000);
+      }
+      if (document.getElementById('screen-transactions').classList.contains('active')) renderTransactions(txSearch.value);
+      setTimeout(() => container.classList.remove('refreshing'), 900);
+      startY = 0;
+    }
+  }, { passive:true });
+
+  // ---------- SWIPE TO DELETE ----------
+  txList.addEventListener('touchstart', e => {
+    const item = e.target.closest('.tx-item');
+    if (item) item._startX = e.touches[0].clientX;
+  }, { passive:true });
+
+  txList.addEventListener('touchmove', e => {
+    const item = e.target.closest('.tx-item');
+    if (!item) return;
+    const diff = e.touches[0].clientX - (item._startX || 0);
+    if (diff < -60){
+      item.style.transform = 'translateX(-70px)';
+      item.style.opacity = '0.6';
+      item.style.transition = '.15s';
+    } else {
+      item.style.transform = 'translateX(0)';
+      item.style.opacity = '1';
+    }
+  }, { passive:true });
+
+  txList.addEventListener('touchend', e => {
+    const item = e.target.closest('.tx-item');
+    if (!item) return;
+    if (item.style.transform === 'translateX(-70px)'){
+      const ref = item.dataset.txRef;
+      item.style.transition = '.2s';
+      item.style.transform = 'translateX(100%)';
+      item.style.opacity = '0';
+      setTimeout(() => {
+        const idx = transactions.findIndex(tx => tx.ref === ref);
+        if (idx > -1) transactions.splice(idx, 1);
+        renderTransactions(txSearch.value);
+      }, 200);
+    } else {
+      item.style.transform = 'translateX(0)';
+      item.style.opacity = '1';
+    }
+  }, { passive:true });
+
+  // init
+  renderTransactions();
+  navigateTo('screen-home');
+})();
+</script>
+</body>
+</html>
