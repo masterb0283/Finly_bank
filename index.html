@@ -335,6 +335,46 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .loading-card p{font-size:13px;font-weight:600;color:var(--ink-soft);}
 
+  /* ---- PIN OVERLAY ---- */
+  .pin-overlay{
+    position:absolute;inset:0;background:rgba(11,18,32,0.6);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:60;border-radius:38px;
+    padding:20px;
+  }
+  .pin-overlay.show{display:flex;animation:fadeSlide .2s ease;}
+  .pin-card{
+    background:var(--paper);border-radius:22px;width:100%;padding:26px 24px 22px;text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  .pin-icon{
+    width:52px;height:52px;border-radius:50%;background:var(--gold-soft);color:#9c6c1c;
+    display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 12px;
+  }
+  .pin-card h3{font-family:'Fraunces',serif;font-size:19px;color:var(--ink);margin-bottom:5px;}
+  .pin-card .pin-sub{font-size:12.5px;color:var(--muted);margin-bottom:20px;}
+  .pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:22px;}
+  .pin-dot{
+    width:15px;height:15px;border-radius:50%;border:1.5px solid var(--line);background:var(--white);
+    transition:.15s;
+  }
+  .pin-dot.filled{background:var(--ink);border-color:var(--ink);}
+  .pin-dot.shake-error{border-color:var(--coral);background:var(--coral-soft);}
+  .pin-error-msg{
+    font-size:11.5px;color:var(--coral);font-weight:600;margin:-12px 0 16px;min-height:14px;
+  }
+  .pin-keypad{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;
+  }
+  .pin-key{
+    background:var(--white);border:none;padding:16px 0;border-radius:15px;font-size:18px;font-weight:600;
+    color:var(--ink);font-family:'IBM Plex Mono',monospace;box-shadow:0 1px 0 var(--line);cursor:pointer;
+    transition:.1s;
+  }
+  .pin-key:active{transform:scale(0.94);background:var(--gold-soft);}
+  .pin-key.pin-key-ghost{background:transparent;box-shadow:none;}
+  .pin-key.pin-key-action{color:var(--ink-soft);font-size:15px;font-family:'Sora',sans-serif;}
+  .pin-forgot{margin-top:14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;text-decoration:underline;}
+
   /* nav */
   .nav-tabs{
     display:flex;justify-content:space-around;padding:12px 12px 6px;margin-top:6px;background:var(--paper);
@@ -555,6 +595,37 @@
       </div>
     </div>
 
+    <!-- PIN OVERLAY -->
+    <div class="pin-overlay" id="pinOverlay">
+      <div class="pin-card">
+        <div class="pin-icon"><i class="fas fa-lock"></i></div>
+        <h3>Enter your PIN</h3>
+        <p class="pin-sub">Enter your 4-digit PIN to authorize this transfer.</p>
+        <div class="pin-dots" id="pinDots">
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+        </div>
+        <div class="pin-error-msg" id="pinErrorMsg"></div>
+        <div class="pin-keypad" id="pinKeypad">
+          <button class="pin-key" data-key="1">1</button>
+          <button class="pin-key" data-key="2">2</button>
+          <button class="pin-key" data-key="3">3</button>
+          <button class="pin-key" data-key="4">4</button>
+          <button class="pin-key" data-key="5">5</button>
+          <button class="pin-key" data-key="6">6</button>
+          <button class="pin-key" data-key="7">7</button>
+          <button class="pin-key" data-key="8">8</button>
+          <button class="pin-key" data-key="9">9</button>
+          <button class="pin-key pin-key-ghost"></button>
+          <button class="pin-key" data-key="0">0</button>
+          <button class="pin-key pin-key-action" id="pinBackspace"><i class="fas fa-delete-left"></i></button>
+        </div>
+        <div class="pin-forgot" id="pinCancelBtn">Cancel transfer</div>
+      </div>
+    </div>
+
     <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loadingOverlay">
       <div class="loading-card">
@@ -625,6 +696,10 @@
     return namePool[seed % namePool.length];
   }
 
+  // demo PIN — this is a mock/demo app, any real integration should never
+  // hardcode or client-side check a PIN like this
+  const DEMO_PIN = '1122';
+
   // ---------- DOM ----------
   const screens = {
     'screen-home': document.getElementById('screen-home'),
@@ -662,6 +737,12 @@
   const confirmDetail = document.getElementById('confirmDetail');
   const confirmBackBtn = document.getElementById('confirmBackBtn');
   const confirmSendBtn = document.getElementById('confirmSendBtn');
+  const pinOverlay = document.getElementById('pinOverlay');
+  const pinDots = document.querySelectorAll('#pinDots .pin-dot');
+  const pinKeypad = document.getElementById('pinKeypad');
+  const pinBackspace = document.getElementById('pinBackspace');
+  const pinErrorMsg = document.getElementById('pinErrorMsg');
+  const pinCancelBtn = document.getElementById('pinCancelBtn');
   const loadingOverlay = document.getElementById('loadingOverlay');
   const successOverlay = document.getElementById('successOverlay');
   const receiptCard = document.getElementById('receiptCard');
@@ -692,6 +773,8 @@
   // when viewing a past transaction's receipt (read-only mode), this holds it;
   // null means we're looking at a receipt for a transfer just made
   let viewingTx = null;
+  let pinValue = '';
+  let pinShakeTimer = null;
 
   // ---------- TRANSACTIONS ----------
   function renderTransactions(filter=''){
@@ -825,7 +908,7 @@
     return 'FIN-' + rand;
   }
 
-  // ---------- REVIEW → CONFIRM → LOADING → SUCCESS ----------
+  // ---------- REVIEW → CONFIRM → PIN → LOADING → SUCCESS ----------
   payNowBtn.addEventListener('click', () => {
     if (payNowBtn.disabled) return;
     confirmAmount.innerText = `₦${selectedAmount.toLocaleString()}`;
@@ -843,6 +926,91 @@
 
   confirmSendBtn.addEventListener('click', () => {
     confirmOverlay.classList.remove('show');
+    openPinOverlay();
+  });
+
+  // ---------- PIN ENTRY ----------
+  function openPinOverlay(){
+    pinValue = '';
+    pinErrorMsg.innerText = '';
+    renderPinDots();
+    pinOverlay.classList.add('show');
+  }
+
+  function closePinOverlay(){
+    pinOverlay.classList.remove('show');
+    pinValue = '';
+    renderPinDots();
+    pinErrorMsg.innerText = '';
+  }
+
+  function renderPinDots(){
+    pinDots.forEach((dot, i) => {
+      dot.classList.toggle('filled', i < pinValue.length);
+      dot.classList.remove('shake-error');
+    });
+  }
+
+  function pinShakeError(message){
+    pinErrorMsg.innerText = message;
+    pinDots.forEach(dot => dot.classList.add('shake-error'));
+    clearTimeout(pinShakeTimer);
+    pinShakeTimer = setTimeout(() => {
+      pinValue = '';
+      renderPinDots();
+    }, 450);
+  }
+
+  function addPinDigit(d){
+    if (pinValue.length >= 4) return;
+    pinValue += d;
+    renderPinDots();
+    if (pinValue.length === 4){
+      setTimeout(checkPin, 120);
+    }
+  }
+
+  function checkPin(){
+    if (pinValue === DEMO_PIN){
+      pinOverlay.classList.remove('show');
+      pinValue = '';
+      pinErrorMsg.innerText = '';
+      proceedWithTransfer();
+    } else {
+      pinShakeError('Incorrect PIN. Try again.');
+    }
+  }
+
+  pinKeypad.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pin-key[data-key]');
+    if (!btn) return;
+    addPinDigit(btn.dataset.key);
+  });
+
+  pinBackspace.addEventListener('click', () => {
+    pinValue = pinValue.slice(0, -1);
+    renderPinDots();
+    pinErrorMsg.innerText = '';
+  });
+
+  pinCancelBtn.addEventListener('click', () => {
+    closePinOverlay();
+  });
+
+  // also allow the physical/on-screen keyboard for convenience
+  document.addEventListener('keydown', (e) => {
+    if (!pinOverlay.classList.contains('show')) return;
+    if (/^[0-9]$/.test(e.key)) addPinDigit(e.key);
+    else if (e.key === 'Backspace'){
+      pinValue = pinValue.slice(0, -1);
+      renderPinDots();
+      pinErrorMsg.innerText = '';
+    } else if (e.key === 'Escape'){
+      closePinOverlay();
+    }
+  });
+
+  function proceedWithTransfer(){
     loadingOverlay.classList.add('show');
 
     // simulate processing time before showing the receipt
@@ -871,7 +1039,7 @@
       loadingOverlay.classList.remove('show');
       successOverlay.classList.add('show');
     }, 1400);
-  });
+  }
 
   // ---------- RECEIPT RENDERING (shared by new transfers & past transactions) ----------
   function showReceipt(tx){
