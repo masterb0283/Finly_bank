@@ -290,6 +290,7 @@
     letter-spacing:0.4px;text-transform:uppercase;padding:4px 11px;border-radius:40px;margin-top:6px;
   }
   .status-badge.negative{background:var(--coral-soft);color:#8a3323;}
+  .status-badge.pending{background:var(--gold-soft);color:#9c6c1c;}
   .perforation{position:relative;height:0;border-top:1.5px dashed var(--line);}
   .perforation::before,.perforation::after{
     content:"";position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;
@@ -334,6 +335,37 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
   .loading-card p{font-size:13px;font-weight:600;color:var(--ink-soft);}
+
+  /* ---- OUTCOME PICKER OVERLAY (demo-only step) ---- */
+  .outcome-overlay{
+    position:absolute;inset:0;background:rgba(11,18,32,0.6);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:58;border-radius:38px;
+    padding:20px;
+  }
+  .outcome-overlay.show{display:flex;animation:fadeSlide .2s ease;}
+  .outcome-card{
+    background:var(--paper);border-radius:22px;width:100%;padding:26px 24px 22px;text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  .outcome-icon{
+    width:52px;height:52px;border-radius:50%;background:var(--paper-dim);color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 12px;
+  }
+  .outcome-card h3{font-family:'Fraunces',serif;font-size:19px;color:var(--ink);margin-bottom:5px;}
+  .outcome-card .outcome-sub{font-size:12.5px;color:var(--muted);margin-bottom:22px;}
+  .outcome-choices{display:flex;flex-direction:column;gap:10px;}
+  .outcome-choice{
+    display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1.5px solid var(--line);
+    background:var(--white);cursor:pointer;text-align:left;font-family:'Sora',sans-serif;transition:.15s;
+  }
+  .outcome-choice:active{transform:scale(0.98);}
+  .outcome-choice .outcome-choice-icon{
+    width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
+  }
+  .outcome-choice.success .outcome-choice-icon{background:var(--mint-soft);color:var(--mint);}
+  .outcome-choice.pending .outcome-choice-icon{background:var(--gold-soft);color:#9c6c1c;}
+  .outcome-choice-text strong{display:block;font-size:13.5px;color:var(--ink);font-weight:600;}
+  .outcome-choice-text span{font-size:11.5px;color:var(--muted);}
 
   /* ---- PIN OVERLAY ---- */
   .pin-overlay{
@@ -595,6 +627,25 @@
       </div>
     </div>
 
+    <!-- OUTCOME PICKER OVERLAY (demo control: choose what the receipt should show) -->
+    <div class="outcome-overlay" id="outcomeOverlay">
+      <div class="outcome-card">
+        <div class="outcome-icon"><i class="fas fa-flask"></i></div>
+        <h3>Simulate result</h3>
+        <p class="outcome-sub">Control your money.</p>
+        <div class="outcome-choices">
+          <button class="outcome-choice success" id="chooseSuccessBtn" type="button">
+            <div class="outcome-choice-icon"><i class="fas fa-check"></i></div>
+            <div class="outcome-choice-text"><strong>Successful</strong><span>Marks the transfer as completed</span></div>
+          </button>
+          <button class="outcome-choice pending" id="choosePendingBtn" type="button">
+            <div class="outcome-choice-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="outcome-choice-text"><strong>Pending</strong><span>Marks the transfer as still processing</span></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- PIN OVERLAY -->
     <div class="pin-overlay" id="pinOverlay">
       <div class="pin-card">
@@ -630,7 +681,7 @@
     <div class="loading-overlay" id="loadingOverlay">
       <div class="loading-card">
         <div class="spinner"></div>
-        <p>Processing transfer…</p>
+        <p id="loadingText">Processing transfer…</p>
       </div>
     </div>
 
@@ -672,12 +723,12 @@
 (function(){
   // ---------- DATA ----------
   const transactions = [
-    { name:'Starbucks', category:'Food', amount:-4500, icon:'☕', bank:'GTBank', account:'0123456789', date:'28 Jun 2026', time:'09:14', ref:'FIN-482910337' },
-    { name:'Salary', category:'Income', amount:340000, icon:'💰', bank:'First Bank', account:'0123456789', date:'25 Jun 2026', time:'08:00', ref:'FIN-317205841' },
-    { name:'Uber', category:'Transport', amount:-3200, icon:'🚗', bank:'Opay', account:'2233445566', date:'24 Jun 2026', time:'18:47', ref:'FIN-609183422' },
-    { name:'Netflix', category:'Entertainment', amount:-1800, icon:'🎬', bank:'GTBank', account:'5566778899', date:'22 Jun 2026', time:'06:03', ref:'FIN-773029981' },
-    { name:'Grocery', category:'Food', amount:-12500, icon:'🛒', bank:'Zenith Bank', account:'0123456789', date:'20 Jun 2026', time:'17:22', ref:'FIN-118475602' },
-    { name:'Freelance', category:'Income', amount:75000, icon:'💻', bank:'Kuda', account:'2233445566', date:'18 Jun 2026', time:'11:35', ref:'FIN-925540173' },
+    { name:'Starbucks', category:'Food', amount:-4500, icon:'☕', bank:'GTBank', account:'0123456789', date:'28 Jun 2026', time:'09:14', ref:'FIN-482910337', status:'completed' },
+    { name:'Salary', category:'Income', amount:340000, icon:'💰', bank:'First Bank', account:'0123456789', date:'25 Jun 2026', time:'08:00', ref:'FIN-317205841', status:'completed' },
+    { name:'Uber', category:'Transport', amount:-3200, icon:'🚗', bank:'Opay', account:'2233445566', date:'24 Jun 2026', time:'18:47', ref:'FIN-609183422', status:'completed' },
+    { name:'Netflix', category:'Entertainment', amount:-1800, icon:'🎬', bank:'GTBank', account:'5566778899', date:'22 Jun 2026', time:'06:03', ref:'FIN-773029981', status:'completed' },
+    { name:'Grocery', category:'Food', amount:-12500, icon:'🛒', bank:'Zenith Bank', account:'0123456789', date:'20 Jun 2026', time:'17:22', ref:'FIN-118475602', status:'completed' },
+    { name:'Freelance', category:'Income', amount:75000, icon:'💻', bank:'Kuda', account:'2233445566', date:'18 Jun 2026', time:'11:35', ref:'FIN-925540173', status:'completed' },
   ];
 
   // known demo accounts resolve to a fixed name; any other 10-digit number
@@ -737,6 +788,9 @@
   const confirmDetail = document.getElementById('confirmDetail');
   const confirmBackBtn = document.getElementById('confirmBackBtn');
   const confirmSendBtn = document.getElementById('confirmSendBtn');
+  const outcomeOverlay = document.getElementById('outcomeOverlay');
+  const chooseSuccessBtn = document.getElementById('chooseSuccessBtn');
+  const choosePendingBtn = document.getElementById('choosePendingBtn');
   const pinOverlay = document.getElementById('pinOverlay');
   const pinDots = document.querySelectorAll('#pinDots .pin-dot');
   const pinKeypad = document.getElementById('pinKeypad');
@@ -744,6 +798,7 @@
   const pinErrorMsg = document.getElementById('pinErrorMsg');
   const pinCancelBtn = document.getElementById('pinCancelBtn');
   const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingText = document.getElementById('loadingText');
   const successOverlay = document.getElementById('successOverlay');
   const receiptCard = document.getElementById('receiptCard');
   const receiptIcon = document.getElementById('receiptIcon');
@@ -773,6 +828,8 @@
   // when viewing a past transaction's receipt (read-only mode), this holds it;
   // null means we're looking at a receipt for a transfer just made
   let viewingTx = null;
+  // outcome chosen on the demo picker: 'completed' or 'pending'
+  let chosenOutcome = 'completed';
   let pinValue = '';
   let pinShakeTimer = null;
 
@@ -794,7 +851,7 @@
           <div class="tx-icon">${tx.icon}</div>
           <div class="tx-info">
             <div class="tx-name">${tx.name}</div>
-            <div class="tx-cat"><span class="category-badge">${tx.category}</span></div>
+            <div class="tx-cat"><span class="category-badge">${tx.category}</span>${tx.status === 'pending' ? ' <span class="category-badge" style="background:var(--gold-soft);color:#9c6c1c;">Pending</span>' : ''}</div>
           </div>
         </div>
         <div class="tx-amount ${tx.amount > 0 ? 'positive' : 'negative'} num">${tx.amount > 0 ? '+' : '−'}₦${Math.abs(tx.amount).toLocaleString()}</div>
@@ -908,7 +965,7 @@
     return 'FIN-' + rand;
   }
 
-  // ---------- REVIEW → CONFIRM → PIN → LOADING → SUCCESS ----------
+  // ---------- REVIEW → CONFIRM → OUTCOME PICK → PIN → LOADING → SUCCESS ----------
   payNowBtn.addEventListener('click', () => {
     if (payNowBtn.disabled) return;
     confirmAmount.innerText = `₦${selectedAmount.toLocaleString()}`;
@@ -926,6 +983,18 @@
 
   confirmSendBtn.addEventListener('click', () => {
     confirmOverlay.classList.remove('show');
+    outcomeOverlay.classList.add('show');
+  });
+
+  // ---------- OUTCOME PICKER (demo control) ----------
+  chooseSuccessBtn.addEventListener('click', () => {
+    chosenOutcome = 'completed';
+    outcomeOverlay.classList.remove('show');
+    openPinOverlay();
+  });
+  choosePendingBtn.addEventListener('click', () => {
+    chosenOutcome = 'pending';
+    outcomeOverlay.classList.remove('show');
     openPinOverlay();
   });
 
@@ -1011,6 +1080,7 @@
   });
 
   function proceedWithTransfer(){
+    loadingText.innerText = chosenOutcome === 'pending' ? 'Submitting transfer…' : 'Processing transfer…';
     loadingOverlay.classList.add('show');
 
     // simulate processing time before showing the receipt
@@ -1020,20 +1090,23 @@
       const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
       const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
 
-      // move money: deduct from balance, add to expenses, log the transaction
+      // move money: deduct from balance always (funds are earmarked even
+      // while pending), add to expenses, log the transaction with the
+      // chosen outcome status
       balanceRaw -= selectedAmount;
       expensesRaw += selectedAmount;
       renderBalance();
       expenseAmount.innerText = `−${formatNaira(expensesRaw).replace('₦ ', '₦')}`;
       transactions.unshift({
         name: accountName.value, category: 'Transfer', amount: -selectedAmount, icon: '🏦',
-        bank: bankSelect.value, account: accountNumber.value, date: dateStr, time: timeStr, ref: ref
+        bank: bankSelect.value, account: accountNumber.value, date: dateStr, time: timeStr, ref: ref,
+        status: chosenOutcome
       });
 
       viewingTx = null;
       showReceipt({
         name: accountName.value, bank: bankSelect.value, account: accountNumber.value,
-        date: dateStr, time: timeStr, ref: ref, amount: -selectedAmount
+        date: dateStr, time: timeStr, ref: ref, amount: -selectedAmount, status: chosenOutcome
       });
 
       loadingOverlay.classList.remove('show');
@@ -1044,6 +1117,7 @@
   // ---------- RECEIPT RENDERING (shared by new transfers & past transactions) ----------
   function showReceipt(tx){
     const isCredit = tx.amount > 0;
+    const isPending = tx.status === 'pending';
     receiptAmount.innerText = `₦${Math.abs(tx.amount).toLocaleString()}`;
     receiptDetail.innerHTML = `
       <div><span>${isCredit ? 'From' : 'Recipient'}</span><span>${tx.name}</span></div>
@@ -1053,6 +1127,18 @@
       <div><span>Time</span><span>${tx.time}</span></div>
     `;
     receiptRef.innerText = `Reference: ${tx.ref}`;
+
+    if (isPending){
+      receiptIcon.style.background = 'var(--gold-soft)';
+      receiptIcon.style.color = '#9c6c1c';
+      receiptIcon.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+      receiptTitle.innerText = isCredit ? 'Payment pending' : 'Transfer pending';
+      receiptSub.innerText = 'This transaction is still being processed.';
+      receiptStatusBadge.className = 'status-badge pending';
+      receiptStatusBadge.innerHTML = '<i class="fas fa-hourglass-half"></i> Pending';
+      return;
+    }
+
     if (isCredit){
       receiptIcon.style.background = 'var(--mint-soft)';
       receiptIcon.style.color = 'var(--mint)';
