@@ -9,27 +9,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0B1220;
-    --ink-soft:#182642;
-    --paper:#FAF7F1;
-    --paper-dim:#F1EAD9;
-    --indigo:#2D3E63;
+    --ink:#00874E;
+    --ink-soft:#00A868;
+    --paper:#FFFFFF;
+    --paper-dim:#EAF7F0;
+    --indigo:#00874E;
     --gold:#D9A340;
     --gold-soft:#F4E3BC;
-    --mint:#2F8F63;
-    --mint-soft:#DCEFE3;
+    --mint:#00A868;
+    --mint-soft:#DFF5E8;
     --coral:#C8543C;
     --coral-soft:#F6DCD3;
-    --line:#E8E1D0;
-    --muted:#8A8370;
+    --line:#DCEEE3;
+    --muted:#6E8A7C;
     --white:#FFFFFF;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{
     font-family:'Sora',sans-serif;
     background:
-      radial-gradient(circle at 15% 8%, #eee3c8 0%, transparent 45%),
-      linear-gradient(160deg,#e9e2cf 0%, #d9d0b8 100%);
+      radial-gradient(circle at 15% 8%, #d7f5e4 0%, transparent 45%),
+      linear-gradient(160deg,#eafaf1 0%, #d7f0e2 100%);
     display:flex;justify-content:center;align-items:center;min-height:100vh;padding:24px;
   }
   .num{font-family:'IBM Plex Mono',monospace;}
@@ -74,7 +74,7 @@
   /* ---- HOME ---- */
   .balance-card{
     position:relative;overflow:hidden;
-    background:linear-gradient(150deg,var(--ink) 0%, var(--ink-soft) 55%, #223258 100%);
+    background:linear-gradient(150deg,var(--ink) 0%, var(--ink-soft) 55%, #00C97A 100%);
     padding:24px 22px 22px;border-radius:26px;color:var(--white);margin-bottom:18px;
     box-shadow:0 16px 32px rgba(11,18,32,0.35);
   }
@@ -632,7 +632,7 @@
       <div class="outcome-card">
         <div class="outcome-icon"><i class="fas fa-flask"></i></div>
         <h3>Simulate result</h3>
-        <p class="outcome-sub">Control your money.</p>
+        <p class="outcome-sub">Demo control — pick how this transfer should resolve.</p>
         <div class="outcome-choices">
           <button class="outcome-choice success" id="chooseSuccessBtn" type="button">
             <div class="outcome-choice-icon"><i class="fas fa-check"></i></div>
@@ -1177,7 +1177,7 @@
     const originalHTML = shareReceiptBtn.innerHTML;
     shareReceiptBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     html2canvas(receiptCard, {
-      backgroundColor: '#FAF7F1',
+      backgroundColor: '#FFFFFF',
       scale: 2,
       useCORS: true
     }).then(canvas => {
@@ -1268,7 +1268,7 @@
       const active = document.querySelector('.screen.active');
       if (active){
         const skel = document.createElement('div');
-        skel.style.cssText = 'height:44px;border-radius:16px;margin:10px 0;background:linear-gradient(90deg,#eee7d8 25%,#f6f1e6 50%,#eee7d8 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;';
+        skel.style.cssText = 'height:44px;border-radius:16px;margin:10px 0;background:linear-gradient(90deg,#e2f5ea 25%,#f3fbf7 50%,#e2f5ea 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;';
         active.prepend(skel);
         setTimeout(() => skel.remove(), 1000);
       }
