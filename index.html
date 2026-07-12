@@ -24,13 +24,15 @@
     --muted:#6E8A7C;
     --white:#FFFFFF;
   }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+  html{touch-action:manipulation;}
   body{
     font-family:'Sora',sans-serif;
     background:
       radial-gradient(circle at 15% 8%, #d7f5e4 0%, transparent 45%),
       linear-gradient(160deg,#eafaf1 0%, #d7f0e2 100%);
     display:flex;justify-content:center;align-items:center;min-height:100vh;padding:24px;
+    touch-action:manipulation;
   }
   .num{font-family:'IBM Plex Mono',monospace;}
   .display{font-family:'Fraunces',serif;}
@@ -486,6 +488,22 @@
   .nav-tabs .tab-item.active{color:var(--ink);background:var(--paper-dim);}
 
   .gesture-hint{font-size:10px;color:#A79F8A;text-align:center;margin:4px 0 0;letter-spacing:0.3px;}
+
+  /* ---- button processing state ---- */
+  .is-processing{pointer-events:none;opacity:0.9;}
+  .fa-spinner.fa-spin{animation:spin .7s linear infinite;}
+
+  /* prominent ring spinner used inside buttons/rows/tiles while processing */
+  .btn-spinner{
+    display:inline-block;width:20px;height:20px;border-radius:50%;
+    border:3px solid rgba(255,255,255,0.32);border-top-color:#FFFFFF;
+    animation:spin .65s linear infinite;vertical-align:-5px;flex-shrink:0;
+  }
+  .btn-spinner.dark{
+    border:3px solid var(--paper-dim);border-top-color:var(--ink);
+  }
+  .btn-spinner-wrap{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;}
+  .btn-spinner.small{width:16px;height:16px;border-width:2.5px;vertical-align:middle;}
 </style>
 </head>
 <body>
@@ -521,10 +539,10 @@
       </div>
 
       <div class="quick-actions">
-        <div class="quick-action" data-target="screen-payment"><i class="fas fa-paper-plane"></i><span>Send</span></div>
-        <div class="quick-action" data-target="screen-payment"><i class="fas fa-credit-card"></i><span>Pay</span></div>
-        <div class="quick-action"><i class="fas fa-hand-holding-dollar"></i><span>Request</span></div>
-        <div class="quick-action"><i class="fas fa-qrcode"></i><span>Scan</span></div>
+        <div class="quick-action" data-target="screen-payment" data-action="send"><i class="fas fa-paper-plane"></i><span>Send</span></div>
+        <div class="quick-action" data-target="screen-payment" data-action="pay"><i class="fas fa-credit-card"></i><span>Pay</span></div>
+        <div class="quick-action" data-action="request"><i class="fas fa-hand-holding-dollar"></i><span>Request</span></div>
+        <div class="quick-action" data-action="scan"><i class="fas fa-qrcode"></i><span>Scan</span></div>
       </div>
 
       <div class="section-label">Insights</div>
@@ -604,19 +622,19 @@
       <div class="goal-item">
         <div class="progress-ring" style="background:conic-gradient(var(--mint) 0% 75%, var(--paper-dim) 75% 100%);"><span>75%</span></div>
         <div class="goal-info"><strong>Emergency fund</strong><span class="text-muted">₦750,000 / ₦1,000,000</span></div>
-        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+        <div class="goal-actions"><button data-goal-action="Add">Add</button><button data-goal-action="Date">Date</button></div>
       </div>
       <div class="goal-item">
         <div class="progress-ring" style="background:conic-gradient(var(--gold) 0% 40%, var(--paper-dim) 40% 100%);"><span>40%</span></div>
         <div class="goal-info"><strong>Vacation</strong><span class="text-muted">₦400,000 / ₦1,000,000</span></div>
-        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+        <div class="goal-actions"><button data-goal-action="Add">Add</button><button data-goal-action="Date">Date</button></div>
       </div>
       <div class="goal-item">
         <div class="progress-ring" style="background:conic-gradient(var(--indigo) 0% 90%, var(--paper-dim) 90% 100%);"><span>90%</span></div>
         <div class="goal-info"><strong>New laptop</strong><span class="text-muted">₦900,000 / ₦1,000,000</span></div>
-        <div class="goal-actions"><button>Add</button><button>Date</button></div>
+        <div class="goal-actions"><button data-goal-action="Add">Add</button><button data-goal-action="Date">Date</button></div>
       </div>
-      <button class="primary-btn"><i class="fas fa-circle-plus"></i> New goal</button>
+      <button class="primary-btn" id="newGoalBtn"><i class="fas fa-circle-plus"></i> New goal</button>
     </div>
 
     <!-- PROFILE -->
@@ -647,12 +665,12 @@
 
       <div class="section-label" style="margin-top:20px;">Account</div>
       <div class="profile-item" id="editProfileBtn"><span><i class="fas fa-pen left-i"></i>Edit profile</span><i class="fas fa-chevron-right"></i></div>
-      <div class="profile-item"><span><i class="fas fa-shield-halved left-i"></i>Security center</span><i class="fas fa-chevron-right"></i></div>
-      <div class="profile-item"><span><i class="fas fa-credit-card left-i"></i>Card management</span><i class="fas fa-chevron-right"></i></div>
-      <div class="profile-item"><span><i class="fas fa-bell left-i"></i>Notification preferences</span><i class="fas fa-chevron-right"></i></div>
-      <div class="profile-item"><span><i class="fas fa-link left-i"></i>Connected accounts</span><i class="fas fa-chevron-right"></i></div>
-      <div class="profile-item"><span><i class="fas fa-gear left-i"></i>Account settings</span><i class="fas fa-chevron-right"></i></div>
-      <button class="primary-btn" style="background:var(--coral); margin-top:22px;">Log out</button>
+      <div class="profile-item" data-profile-action="Security center"><span><i class="fas fa-shield-halved left-i"></i>Security center</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item" data-profile-action="Card management"><span><i class="fas fa-credit-card left-i"></i>Card management</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item" data-profile-action="Notification preferences"><span><i class="fas fa-bell left-i"></i>Notification preferences</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item" data-profile-action="Connected accounts"><span><i class="fas fa-link left-i"></i>Connected accounts</span><i class="fas fa-chevron-right"></i></div>
+      <div class="profile-item" data-profile-action="Account settings"><span><i class="fas fa-gear left-i"></i>Account settings</span><i class="fas fa-chevron-right"></i></div>
+      <button class="primary-btn" id="logoutBtn" style="background:var(--coral); margin-top:22px;">Log out</button>
     </div>
 
     <!-- EDIT PROFILE -->
@@ -683,7 +701,7 @@
         <button class="ghost-btn" data-target="screen-profile">Cancel</button>
         <button class="primary-btn" id="saveProfileBtn">Save changes</button>
       </div>
-      <div class="save-toast" id="saveToast"><i class="fas fa-check"></i> Profile updated</div>
+      <div class="save-toast" id="saveToast"><i class="fas fa-check"></i> <span id="saveToastText">Profile updated</span></div>
     </div>
 
     <!-- CONFIRMATION OVERLAY (before sending) -->
@@ -809,6 +827,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 (function(){
+  // ---------- BLOCK DOUBLE-TAP / PINCH ZOOM ----------
+  // belt-and-braces on top of the viewport meta + touch-action CSS, since
+  // some mobile browsers still allow a fast double-tap to zoom the page
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('dblclick', (e) => e.preventDefault());
+
   // ---------- DATA ----------
   const transactions = [
     { name:'Starbucks', category:'Food', amount:-4500, icon:'☕', bank:'GTBank', account:'0123456789', date:'28 Jun 2026', time:'09:14', ref:'FIN-482910337', status:'completed' },
@@ -920,6 +950,7 @@
   const editPhone = document.getElementById('editPhone');
   const saveProfileBtn = document.getElementById('saveProfileBtn');
   const saveToast = document.getElementById('saveToast');
+  const saveToastText = document.getElementById('saveToastText');
   const greetingName = document.getElementById('greetingName');
   const headerAvatar = document.getElementById('headerAvatar');
   let selectedAmount = 1000;
@@ -930,6 +961,59 @@
   let chosenOutcome = 'completed';
   let pinValue = '';
   let pinShakeTimer = null;
+
+  // ---------- GENERIC "PROCESSING" HELPERS ----------
+  // shows a brief spinner on a <button>-style element (safe to toggle .disabled)
+  // before running the actual action. Keeps every button feeling responsive
+  // instead of instant/robotic.
+  function withProcessingButton(btn, action, opts){
+    opts = opts || {};
+    if (!btn || btn.classList.contains('is-processing')) return;
+    const original = btn.innerHTML;
+    const label = opts.label ? ' ' + opts.label : '';
+    // primary-btn has a dark/solid fill, so use a light-on-dark spinner;
+    // everything else (ghost-btn, goal-actions, outcome-choice) has a light
+    // background, so use the dark variant so it stays clearly visible
+    const isLightBg = !btn.classList.contains('primary-btn');
+    btn.classList.add('is-processing');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="btn-spinner-wrap"><span class="btn-spinner${isLightBg ? ' dark' : ''}"></span>${label}</span>`;
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.classList.remove('is-processing');
+      btn.disabled = !!opts.keepDisabled;
+      action();
+    }, opts.delay || 3000);
+  }
+
+  // shows a brief spinner on a non-button clickable element (like a div/li row)
+  // that has no native disabled state, swapping its trailing icon for a spinner
+  function withProcessingRow(el, action, opts){
+    opts = opts || {};
+    if (!el || el.classList.contains('is-processing')) return;
+    const swapIcon = el.querySelector(opts.iconSelector || '.fa-chevron-right, i:last-child');
+    const originalOuterHTML = swapIcon ? swapIcon.outerHTML : null;
+    el.classList.add('is-processing');
+    if (swapIcon){
+      const spinner = document.createElement('span');
+      spinner.className = 'btn-spinner dark small';
+      swapIcon.replaceWith(spinner);
+    }
+    setTimeout(() => {
+      const current = el.querySelector('.btn-spinner');
+      if (current && originalOuterHTML) current.outerHTML = originalOuterHTML;
+      el.classList.remove('is-processing');
+      action();
+    }, opts.delay || 3000);
+  }
+
+  let toastTimer = null;
+  function showToast(message){
+    clearTimeout(toastTimer);
+    saveToastText.innerText = message;
+    saveToast.classList.add('show');
+    toastTimer = setTimeout(() => saveToast.classList.remove('show'), 1800);
+  }
 
   // ---------- TRANSACTIONS ----------
   function renderTransactions(filter=''){
@@ -964,7 +1048,50 @@
     if (id === 'screen-transactions') renderTransactions(txSearch.value);
   }
   document.querySelectorAll('[data-target]').forEach(el => {
-    el.addEventListener('click', () => navigateTo(el.dataset.target));
+    el.addEventListener('click', () => {
+      // quick-action tiles on Home (Send/Pay) get a short processing beat
+      // before navigating, matching the rest of the app's action buttons
+      if (el.classList.contains('quick-action') && (el.dataset.action === 'send' || el.dataset.action === 'pay')){
+        if (el.classList.contains('is-processing')) return;
+        el.classList.add('is-processing');
+        const icon = el.querySelector('i');
+        const originalIconHTML = icon ? icon.outerHTML : null;
+        if (icon){
+          const spinner = document.createElement('span');
+          spinner.className = 'btn-spinner dark small';
+          icon.replaceWith(spinner);
+        }
+        setTimeout(() => {
+          const spinnerNow = el.querySelector('.btn-spinner');
+          if (spinnerNow && originalIconHTML) spinnerNow.outerHTML = originalIconHTML;
+          el.classList.remove('is-processing');
+          navigateTo(el.dataset.target);
+        }, 3000);
+        return;
+      }
+      navigateTo(el.dataset.target);
+    });
+  });
+
+  // Request / Scan quick actions (no destination screen yet) — process, then toast
+  document.querySelectorAll('.quick-action[data-action="request"], .quick-action[data-action="scan"]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (el.classList.contains('is-processing')) return;
+      el.classList.add('is-processing');
+      const icon = el.querySelector('i');
+      const originalIconHTML = icon ? icon.outerHTML : null;
+      if (icon){
+        const spinner = document.createElement('span');
+        spinner.className = 'btn-spinner dark small';
+        icon.replaceWith(spinner);
+      }
+      setTimeout(() => {
+        const spinnerNow = el.querySelector('.btn-spinner');
+        if (spinnerNow && originalIconHTML) spinnerNow.outerHTML = originalIconHTML;
+        el.classList.remove('is-processing');
+        showToast(el.dataset.action === 'request' ? 'Request money — coming soon' : 'Scan to pay — coming soon');
+      }, 3000);
+    });
   });
 
   // ---------- BALANCE ----------
@@ -1074,13 +1201,15 @@
   // ---------- REVIEW → CONFIRM → OUTCOME PICK → PIN → LOADING → RECEIPT ----------
   payNowBtn.addEventListener('click', () => {
     if (payNowBtn.disabled) return;
-    confirmAmount.innerText = `₦${selectedAmount.toLocaleString()}`;
-    confirmDetail.innerHTML = `
-      <div><span>Recipient</span><span>${accountName.value}</span></div>
-      <div><span>Bank</span><span>${bankSelect.value}</span></div>
-      <div><span>Account</span><span>${accountNumber.value}</span></div>
-    `;
-    confirmOverlay.classList.add('show');
+    withProcessingButton(payNowBtn, () => {
+      confirmAmount.innerText = `₦${selectedAmount.toLocaleString()}`;
+      confirmDetail.innerHTML = `
+        <div><span>Recipient</span><span>${accountName.value}</span></div>
+        <div><span>Bank</span><span>${bankSelect.value}</span></div>
+        <div><span>Account</span><span>${accountNumber.value}</span></div>
+      `;
+      confirmOverlay.classList.add('show');
+    }, { label: 'Reviewing', delay: 3000 });
   });
 
   confirmBackBtn.addEventListener('click', () => {
@@ -1088,20 +1217,26 @@
   });
 
   confirmSendBtn.addEventListener('click', () => {
-    confirmOverlay.classList.remove('show');
-    outcomeOverlay.classList.add('show');
+    withProcessingButton(confirmSendBtn, () => {
+      confirmOverlay.classList.remove('show');
+      outcomeOverlay.classList.add('show');
+    }, { label: 'Sending', delay: 3000 });
   });
 
   // ---------- OUTCOME PICKER (demo control) ----------
   chooseSuccessBtn.addEventListener('click', () => {
-    chosenOutcome = 'completed';
-    outcomeOverlay.classList.remove('show');
-    openPinOverlay();
+    withProcessingButton(chooseSuccessBtn, () => {
+      chosenOutcome = 'completed';
+      outcomeOverlay.classList.remove('show');
+      openPinOverlay();
+    }, { delay: 3000 });
   });
   choosePendingBtn.addEventListener('click', () => {
-    chosenOutcome = 'pending';
-    outcomeOverlay.classList.remove('show');
-    openPinOverlay();
+    withProcessingButton(choosePendingBtn, () => {
+      chosenOutcome = 'pending';
+      outcomeOverlay.classList.remove('show');
+      openPinOverlay();
+    }, { delay: 3000 });
   });
 
   // ---------- PIN ENTRY ----------
@@ -1218,7 +1353,7 @@
 
       loadingOverlay.classList.remove('show');
       successOverlay.classList.add('show');
-    }, 1400);
+    }, 3000);
   }
 
   // ---------- helpers to build the step-by-step progress tracker ----------
@@ -1395,9 +1530,10 @@
   });
 
   reportIssueBtn.addEventListener('click', () => {
-    const original = reportIssueBtn.innerHTML;
-    reportIssueBtn.innerHTML = '<i class="fas fa-check"></i> Reported';
-    setTimeout(() => { reportIssueBtn.innerHTML = original; }, 1400);
+    withProcessingButton(reportIssueBtn, () => {
+      reportIssueBtn.innerHTML = '<i class="fas fa-check"></i> Reported';
+      setTimeout(() => { reportIssueBtn.innerHTML = 'Report issue'; }, 1400);
+    }, { label: 'Reporting', delay: 3000 });
   });
 
   receiptBackBtn.addEventListener('click', () => {
@@ -1434,10 +1570,12 @@
   renderProfile();
 
   editProfileBtn.addEventListener('click', () => {
-    editName.value = profile.name;
-    editEmail.value = profile.email;
-    editPhone.value = profile.phone;
-    navigateTo('screen-profile-edit');
+    withProcessingRow(editProfileBtn, () => {
+      editName.value = profile.name;
+      editEmail.value = profile.email;
+      editPhone.value = profile.phone;
+      navigateTo('screen-profile-edit');
+    }, { delay: 3000 });
   });
 
   saveProfileBtn.addEventListener('click', () => {
@@ -1445,15 +1583,50 @@
       editName.focus();
       return;
     }
-    profile.name = editName.value.trim();
-    profile.email = editEmail.value.trim();
-    profile.phone = editPhone.value.trim();
-    renderProfile();
-    saveToast.classList.add('show');
-    setTimeout(() => saveToast.classList.remove('show'), 1800);
-    navigateTo('screen-profile');
+    withProcessingButton(saveProfileBtn, () => {
+      profile.name = editName.value.trim();
+      profile.email = editEmail.value.trim();
+      profile.phone = editPhone.value.trim();
+      renderProfile();
+      showToast('Profile updated');
+      navigateTo('screen-profile');
+    }, { label: 'Saving', delay: 3000 });
   });
 
+  // profile settings rows (Security center, Card management, etc.) — process, then toast
+  document.querySelectorAll('.profile-item[data-profile-action]').forEach(row => {
+    row.addEventListener('click', () => {
+      withProcessingRow(row, () => {
+        showToast(`${row.dataset.profileAction} — coming soon`);
+      }, { delay: 3000 });
+    });
+  });
+
+  // log out
+  const logoutBtn = document.getElementById('logoutBtn');
+  logoutBtn.addEventListener('click', () => {
+    withProcessingButton(logoutBtn, () => {
+      showToast('Logged out');
+      navigateTo('screen-home');
+    }, { label: 'Logging out', delay: 3000 });
+  });
+
+  // goal item actions (Add / Date) — process, then toast
+  document.querySelectorAll('.goal-actions button[data-goal-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      withProcessingButton(btn, () => {
+        showToast(btn.dataset.goalAction === 'Add' ? 'Add funds — coming soon' : 'Set target date — coming soon');
+      }, { delay: 3000 });
+    });
+  });
+
+  // new goal
+  const newGoalBtn = document.getElementById('newGoalBtn');
+  newGoalBtn.addEventListener('click', () => {
+    withProcessingButton(newGoalBtn, () => {
+      showToast('New goal — coming soon');
+    }, { label: 'Setting up', delay: 3000 });
+  });
 
   // ---------- SEARCH ----------
   txSearch.addEventListener('input', e => renderTransactions(e.target.value));
